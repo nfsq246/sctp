@@ -19,6 +19,12 @@ import (
 	"github.com/pion/randutil"
 )
 
+// change
+const (
+	sendWindow    = 64 //发送窗口大小
+	receiveWindow = 32
+)
+
 // Port 5000 shows up in examples for SDPs used by WebRTC. Since this implementation
 // assumes it will be used by DTLS over UDP, the port is only meaningful for de-multiplexing
 // but more-so verification.
@@ -371,7 +377,9 @@ func createAssociation(config Config) *Association {
 	//  o  The initial cwnd before DATA transmission or after a sufficiently
 	//     long idle period MUST be set to min(4*MTU, max (2*MTU, 4380
 	//     bytes)).
-	a.setCWND(min32(4*a.MTU(), max32(2*a.MTU(), 4380)))
+	// a.setCWND(min32(4*a.MTU(), max32(2*a.MTU(), 4380)))
+	// change
+	a.setCWND(sendWindow * a.MTU())
 	a.log.Tracef("[%s] updated cwnd=%d ssthresh=%d inflight=%d (INI)",
 		a.name, a.CWND(), a.ssthresh, a.inflightQueue.getNumBytes())
 
@@ -1753,16 +1761,18 @@ func (a *Association) processFastRetransmission(cumTSNAckPoint, htna uint32, cum
 			if !ok {
 				return fmt.Errorf("%w: %v", ErrTSNRequestNotExist, tsn)
 			}
-			if !c.acked && !c.abandoned() && c.missIndicator < 3 {
+			if !c.acked && !c.abandoned() && c.missIndicator < 2 {
 				c.missIndicator++
-				if c.missIndicator == 3 {
+				if c.missIndicator == 2 {
 					if !a.inFastRecovery {
 						// 2)  If not in Fast Recovery, adjust the ssthresh and cwnd of the
 						//     destination address(es) to which the missing DATA chunks were
 						//     last sent, according to the formula described in Section 7.2.3.
 						a.inFastRecovery = true
 						a.fastRecoverExitPoint = htna
-						a.ssthresh = max32(a.CWND()/2, 4*a.MTU())
+						//a.ssthresh = max32(a.CWND()/2, 4*a.MTU())
+						// change
+						a.ssthresh = max32(a.CWND()/2, sendWindow*a.MTU())
 						a.setCWND(a.ssthresh)
 						a.partialBytesAcked = 0
 						a.willRetransmitFast = true
@@ -2639,8 +2649,11 @@ func (a *Association) onRetransmissionTimeout(id int, nRtos uint) {
 		//      ssthresh = max(cwnd/2, 4*MTU)
 		//      cwnd = 1*MTU
 
-		a.ssthresh = max32(a.CWND()/2, 4*a.MTU())
-		a.setCWND(a.MTU())
+		//a.ssthresh = max32(a.CWND()/2, 4*a.MTU())
+		//a.setCWND(a.MTU())
+		// change
+		a.ssthresh = max32(a.CWND()/2, sendWindow*a.MTU())
+		a.setCWND(a.ssthresh / 2)
 		a.log.Tracef("[%s] updated cwnd=%d ssthresh=%d inflight=%d (RTO)",
 			a.name, a.CWND(), a.ssthresh, a.inflightQueue.getNumBytes())
 
