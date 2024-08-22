@@ -823,8 +823,11 @@ func (a *Association) gatherOutboundFastRetransmissionPackets(rawPackets [][]byt
 			if c.acked || c.abandoned() {
 				continue
 			}
-
-			if c.nSent > 1 || c.missIndicator < 3 {
+			//if c.nSent > 1 || c.missIndicator < 3 {
+			//	continue
+			//}
+			// change
+			if c.nSent > 5 || c.missIndicator < 2 {
 				continue
 			}
 
@@ -1620,8 +1623,8 @@ func (a *Association) processSelectiveAck(d *chunkSelectiveAck) (map[uint16]int,
 			//        chunk or for a later instance)
 			if c.nSent == 1 && sna32GTE(c.tsn, a.minTSN2MeasureRTT) {
 				a.minTSN2MeasureRTT = a.myNextTSN
-				rtt := time.Since(c.since).Seconds() * 1000.0
-				srtt := a.rtoMgr.setNewRTT(rtt)
+				rtt := time.Since(c.since).Milliseconds()
+				srtt := a.rtoMgr.setNewRTT(float64(rtt))
 				a.srtt.Store(srtt)
 				a.log.Tracef("[%s] SACK: measured-rtt=%f srtt=%f new-rto=%f",
 					a.name, rtt, srtt, a.rtoMgr.getRTO())
@@ -1659,8 +1662,8 @@ func (a *Association) processSelectiveAck(d *chunkSelectiveAck) (map[uint16]int,
 
 				if c.nSent == 1 {
 					a.minTSN2MeasureRTT = a.myNextTSN
-					rtt := time.Since(c.since).Seconds() * 1000.0
-					srtt := a.rtoMgr.setNewRTT(rtt)
+					rtt := time.Since(c.since).Milliseconds()
+					srtt := a.rtoMgr.setNewRTT(float64(rtt))
 					a.srtt.Store(srtt)
 					a.log.Tracef("[%s] SACK: measured-rtt=%f srtt=%f new-rto=%f",
 						a.name, rtt, srtt, a.rtoMgr.getRTO())
