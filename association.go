@@ -827,7 +827,7 @@ func (a *Association) gatherOutboundFastRetransmissionPackets(rawPackets [][]byt
 			//	continue
 			//}
 			// change
-			if c.nSent > 5 || c.missIndicator < 2 {
+			if c.nSent > 10 || c.missIndicator < 2 {
 				continue
 			}
 

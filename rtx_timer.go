@@ -4,7 +4,6 @@
 package sctp
 
 import (
-	"fmt"
 	"math"
 	"sync"
 	"time"
@@ -12,10 +11,10 @@ import (
 
 const (
 	// RTO.Initial in msec
-	rtoInitial float64 = 1.0 * 100
+	rtoInitial float64 = 1.0 * 70
 
 	// RTO.Min in msec
-	rtoMin float64 = 1.0 * 100
+	rtoMin float64 = 1.0 * 25
 
 	// RTO.Max in msec
 	defaultRTOMax float64 = 10.0 * 1000
@@ -77,7 +76,6 @@ func (m *rtoManager) setNewRTT(rtt float64) float64 {
 		m.srtt = (1-rtoAlpha)*m.srtt + rtoAlpha*rtt
 	}
 	m.rto = math.Min(math.Max(m.srtt+4*m.rttvar, rtoMin), m.rtoMax)
-	fmt.Println("setNewRTT", rtt, m.rto)
 
 	return m.srtt
 }
