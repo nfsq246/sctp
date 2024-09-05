@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ackInterval time.Duration = 200 * time.Millisecond
+	ackInterval time.Duration = 100 * time.Millisecond
 )
 
 // ackTimerObserver is the inteface to an ack timer observer.

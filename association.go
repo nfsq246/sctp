@@ -1764,9 +1764,9 @@ func (a *Association) processFastRetransmission(cumTSNAckPoint, htna uint32, cum
 			if !ok {
 				return fmt.Errorf("%w: %v", ErrTSNRequestNotExist, tsn)
 			}
-			if !c.acked && !c.abandoned() && c.missIndicator < 2 {
+			if !c.acked && !c.abandoned() && c.missIndicator < 1 {
 				c.missIndicator++
-				if c.missIndicator == 2 {
+				if c.missIndicator == 1 {
 					if !a.inFastRecovery {
 						// 2)  If not in Fast Recovery, adjust the ssthresh and cwnd of the
 						//     destination address(es) to which the missing DATA chunks were
