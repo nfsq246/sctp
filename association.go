@@ -145,6 +145,15 @@ func getAssociationStateString(a uint32) string {
 	}
 }
 
+var instance *Association
+var instanceLock sync.RWMutex
+
+func Instance() *Association {
+	instanceLock.RLock()
+	defer instanceLock.RUnlock()
+	return instance
+}
+
 // Association represents an SCTP association
 // 13.2.  Parameters Necessary per Association (i.e., the TCB)
 //
@@ -294,8 +303,16 @@ func Client(config Config) (*Association, error) {
 
 func createClientWithContext(ctx context.Context, config Config) (*Association, error) {
 	a := createAssociation(config)
+	var ok bool
+	defer func() {
+		if ok {
+			instanceLock.Lock()
+			instance = a
+			instanceLock.Unlock()
+			fmt.Println("create sctp client")
+		}
+	}()
 	a.init(true)
-
 	select {
 	case <-ctx.Done():
 		a.log.Errorf("[%s] client handshake canceled: state=%s", a.name, getAssociationStateString(a.getState()))
@@ -305,6 +322,7 @@ func createClientWithContext(ctx context.Context, config Config) (*Association, 
 		if err != nil {
 			return nil, err
 		}
+		ok = true
 		return a, nil
 	case <-a.readLoopCloseCh:
 		return nil, ErrAssociationClosedBeforeConn
@@ -1764,9 +1782,9 @@ func (a *Association) processFastRetransmission(cumTSNAckPoint, htna uint32, cum
 			if !ok {
 				return fmt.Errorf("%w: %v", ErrTSNRequestNotExist, tsn)
 			}
-			if !c.acked && !c.abandoned() && c.missIndicator < 1 {
+			if !c.acked && !c.abandoned() && c.missIndicator < 2 {
 				c.missIndicator++
-				if c.missIndicator == 1 {
+				if c.missIndicator == 2 {
 					if !a.inFastRecovery {
 						// 2)  If not in Fast Recovery, adjust the ssthresh and cwnd of the
 						//     destination address(es) to which the missing DATA chunks were
